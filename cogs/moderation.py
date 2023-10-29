@@ -6,7 +6,7 @@ class moderation(commands.Cog):
         self.bot = bot
 
     @commands.command(help = "Remove a set amount of messages from the current channel", brief="Remove messages", description="Yeah, remove messages")
-    @commands.has_permissions(administrator=True)
+    @commands.has_permissions(manage_messages=True)
     async def purge(self, ctx, amount:int):
         amount = amount or 100
         if amount > 100:
@@ -17,21 +17,17 @@ class moderation(commands.Cog):
         await ctx.channel.purge(limit=amount)
         await ctx.send(f"{ctx.message.author.mention} purged {amount} messages successfully.", delete_after=5)
 
-    @commands.command()
-    @commands.has_permissions(ban_members = True)
-    async def kick(self, ctx, user : discord.User, *reason:str):
-        if ctx.author.top_role > user.top_role:
-            try:
-                await user.kick(reason=" ".join(reason))
-            except:
-                await ctx.message.delete()
-                await ctx.send(f"{ctx.message.author.mention}, failed to kick that user!") 
-            else:
-                await ctx.message.delete()
-                await ctx.send(f"{ctx.message.author.mention}, failed to kick that user!") 
+    @commands.command(help = "Kick a user with this command", brief = "Kicks a user", description="Yeah, really, it kicks members...")
+    @commands.has_permissions(kick_members=True)
+    async def kick(ctx, member: discord.Member, *, reason="no reason was specified!"):
+        if member == ctx.message.author:
+            await ctx.send("You can't kick yourself.")
         else:
-            await ctx.message.delete()
-            await ctx.send(f"{ctx.message.author.mention}, successfully kicked")
+            if member.top_role < ctx.message.author.top_role:
+                await member.kick(reason=reason)
+                await ctx.send(f'{member.mention} has been kicked for: {" ".join(reason)}')
+            else:
+                await ctx.send("This user has a higher rank than you, IDIOT.")
 
 async def setup(bot):
     await bot.add_cog(moderation(bot))
